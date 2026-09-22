@@ -1,0 +1,27 @@
+# Local package archives and generated channel indexes.
+channels/seed/*
+channels/dirty/*
+channels/result/*
+!channels/seed/.gitkeep
+!channels/dirty/.gitkeep
+!channels/result/.gitkeep
+
+# Generated solver records.
+seed-resolve.json
+seed-channel-verify.json
+
+# Build and tool caches.
+.cache/
+.pkg-cache/
+.verify-cache/
+output/
+bld/
+build/
+
+# Editor and OS files.
+.DS_Store
+*.swp
+*~
+
+# Local staging output used while building and testing packages.
+.build-output/

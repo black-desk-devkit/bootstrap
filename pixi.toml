@@ -1,0 +1,19 @@
+[workspace]
+name = "devkit-bootstrap"
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+rattler-build = "0.75.*"
+rattler-index = "*"
+mamba = "*"
+jq = "*"
+curl = "*"
+coreutils = "*"
+cpio = "*"
+rpm-tools = "*"
+
+[tasks]
+bootstrap = "bash scripts/bootstrap.sh"
+check-seed = "bash scripts/check-seed.sh"
+check-result = "bash scripts/check-result.sh"

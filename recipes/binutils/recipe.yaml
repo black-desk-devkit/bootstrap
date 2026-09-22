@@ -1,0 +1,88 @@
+schema_version: 1
+
+context:
+  version: "2.46.1"
+
+package:
+  name: binutils
+  version: ${{ version }}
+
+source:
+  url: https://ftp.gnu.org/gnu/binutils/binutils-${{ version }}.tar.bz2
+  sha256: 324ed40ada2633a28eaa5d104ca5db165fd3cc3162cc1d48a7b7fa9c932da439
+  # The two bug fixes carried by the conda-forge 2.46.1 recipe are already
+  # present in the upstream 2.46.1 release tarball, so no source patches are
+  # needed here.
+
+build:
+  number: 0
+  string: h${{ hash }}_${{ build_number }}
+  script:
+    file: build.sh
+    env:
+      SYSROOT_TRIPLET: "${{ sysroot_triplet }}"
+
+requirements:
+  build:
+    # `binutils` here is the previous stage's assembler/linker interface. It is
+    # the conda-forge generic entry package in the seed and this package in
+    # every later self-hosted stage.
+    - gcc
+    - gxx
+    - binutils ==2.46.1
+    - make
+    - sysroot_linux-64
+
+tests:
+  - package_contents:
+      bin:
+        - addr2line
+        - ar
+        - as
+        - c++filt
+        - elfedit
+        - gprof
+        - ld
+        - ld.bfd
+        - nm
+        - objcopy
+        - objdump
+        - ranlib
+        - readelf
+        - size
+        - strings
+        - strip
+        - x86_64-pc-linux-gnu-as
+        - x86_64-pc-linux-gnu-ld
+        - x86_64-pc-linux-gnu-readelf
+
+  - script:
+      # This is a native binutils build: it must not embed a conda sysroot.
+      - test -z "$(ld --print-sysroot)"
+      - test -z "$(x86_64-pc-linux-gnu-ld --print-sysroot)"
+      - as --version
+      - ld --version
+      - x86_64-pc-linux-gnu-as --version
+      - x86_64-pc-linux-gnu-ld --version
+      - as tests/nop.s -o nop.o
+      - ld -r nop.o -o nop-r.o
+      - readelf -h nop-r.o
+    files:
+      recipe:
+        - tests/
+
+about:
+  homepage: https://www.gnu.org/software/binutils/
+  license: GPL-3.0-only
+  license_file:
+    - COPYING
+    - COPYING.LIB
+    - COPYING3
+    - COPYING3.LIB
+  summary: Native GNU binutils for the devkit host-integrating toolchain
+  description: A single-output native binutils package with no embedded conda sysroot.
+  repository: https://sourceware.org/git/binutils-gdb.git
+  documentation: https://sourceware.org/binutils/docs/
+
+extra:
+  bootstrap-role: native-binutils

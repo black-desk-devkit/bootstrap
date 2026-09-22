@@ -1,0 +1,51 @@
+schema_version: 1
+
+context:
+  version: "4.4.1"
+
+package:
+  name: make
+  version: ${{ version }}
+
+source:
+  url: https://ftp.gnu.org/gnu/make/make-${{ version }}.tar.gz
+  sha256: dd16fb1d67bfab79a72f5e8390735c49e3e8e70b4945a15ab1f81ddb78658fb3
+
+build:
+  number: 0
+  string: h${{ hash }}_${{ build_number }}
+  script:
+    file: build.sh
+    env:
+      SYSROOT_TRIPLET: "${{ sysroot_triplet }}"
+
+requirements:
+  build:
+    - gcc
+    - binutils ==2.46.1
+    - gnuconfig ==2025.07.09
+    - sysroot_linux-64
+
+tests:
+  - package_contents:
+      bin:
+        - make
+
+  - script:
+      - make --version
+      - test "$(make -f tests/Makefile)" = local-make-ok
+    files:
+      recipe:
+        - tests/
+
+about:
+  homepage: https://www.gnu.org/software/make/
+  license: GPL-3.0-or-later
+  license_file: COPYING
+  summary: GNU Make for the devkit bootstrap build environment
+  description: GNU Make built by the self-hosted devkit compiler with an explicitly selected sysroot.
+  repository: https://git.savannah.gnu.org/git/make.git
+  documentation: https://www.gnu.org/software/make/manual/
+
+extra:
+  bootstrap-role: build-tool

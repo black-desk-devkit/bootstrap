@@ -1,0 +1,67 @@
+schema_version: 1
+
+context:
+  version: "2.28"
+
+package:
+  name: sysroot_linux-64
+  version: ${{ version }}
+
+source:
+  - url: https://dl.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/g/glibc-2.28-251.el8_10.40.x86_64.rpm
+    sha256: f9ee0ed8611d1b4421ac5f9b377ac238377e47466aaaf075822b2d811f01bbdf
+    file_name: glibc.rpm
+  - url: https://dl.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/g/glibc-devel-2.28-251.el8_10.40.x86_64.rpm
+    sha256: a362e73867c2151cdf19f6fe2fdc520d9b3414b9f922eac3de708669411c7e67
+    file_name: glibc-devel.rpm
+  - url: https://dl.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/g/glibc-headers-2.28-251.el8_10.40.x86_64.rpm
+    sha256: 137c4b4bb4074fca3c51bb64f81b193557efd5f0e4aab9dafa88049c136b78da
+    file_name: glibc-headers.rpm
+  - url: https://dl.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/Packages/g/glibc-static-2.28-251.el8_10.40.x86_64.rpm
+    sha256: 27d2099707e36f25096a109385eaec22b981666d3c304d9f577492e80dd93797
+    file_name: glibc-static.rpm
+  - url: https://dl.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/g/glibc-common-2.28-251.el8_10.40.x86_64.rpm
+    sha256: fef3b59c014ec8d288bbefaf343e74c225a9644813c2078eda53679825a8645e
+    file_name: glibc-common.rpm
+  - url: https://dl.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/g/glibc-gconv-extra-2.28-251.el8_10.40.x86_64.rpm
+    sha256: cd50cbcfe233fd4e5deee406bfa275d37e2bee15d343e31d9d4f8d9871ba85b8
+    file_name: glibc-gconv-extra.rpm
+  - url: https://dl.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/g/glibc-langpack-en-2.28-251.el8_10.40.x86_64.rpm
+    sha256: eeb2af8c4b4114f1a9af1f86870cbeb3f8b48fb6f49d4e80ed31794cc207642f
+    file_name: glibc-langpack-en.rpm
+  - url: https://dl.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/k/kernel-headers-4.18.0-553.164.1.el8_10.x86_64.rpm
+    sha256: 720389167daa7488fe5286f84a1d0705248c50c7c86da671e3a76776d37a2f75
+    file_name: kernel-headers.rpm
+
+build:
+  number: 0
+  string: h${{ hash }}_${{ build_number }}
+  script:
+    file: build.sh
+    env:
+      SYSROOT_TRIPLET: "${{ sysroot_triplet }}"
+
+# rpm2cpio and cpio are supplied by the Pixi build environment used to run
+# this bootstrap.  They are intentionally tooling dependencies, not part of
+# the target sysroot package.
+
+requirements:
+  run:
+    - tzdata
+
+tests:
+  - script:
+      - test -d "${PREFIX}/${{ sysroot_triplet }}/sysroot/lib64"
+      - test -f "${PREFIX}/${{ sysroot_triplet }}/sysroot/usr/include/stdio.h"
+      - test -f "${PREFIX}/${{ sysroot_triplet }}/sysroot/usr/include/linux/version.h"
+      - test -f "${PREFIX}/${{ sysroot_triplet }}/sysroot/lib64/libc.so.6"
+      - test -f "${PREFIX}/${{ sysroot_triplet }}/sysroot/lib64/crt1.o"
+
+about:
+  homepage: https://www.rockylinux.org/
+  license: LGPL-2.1-or-later AND GPL-2.0-or-later
+  summary: Rocky Linux 8.10 glibc and Linux kernel development sysroot
+  description: A relocatable Rocky Linux 8.10 sysroot assembled from pinned RPMs.
+
+extra:
+  bootstrap-role: target-sysroot

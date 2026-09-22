@@ -1,0 +1,119 @@
+schema_version: 1
+
+context:
+  version: "16.2.0"
+
+# This is the only recipe that compiles GCC. It is intentionally reusable:
+# `gcc` and `gxx` are stable compiler-interface names supplied by the previous
+# stage. For the dirty build they resolve from the seed; for the result build
+# they resolve from aliases in the dirty channel.
+package:
+  name: gcc-toolchain
+  version: ${{ version }}
+
+source:
+  - url: https://ftp.gnu.org/gnu/gcc/gcc-${{ version }}/gcc-${{ version }}.tar.gz
+    sha256: 071d00a097579e5ef7ce97fc4a9e58e73fd3503c0a013c765c970370a5a53b9b
+  # GCC's prerequisite helper would download these during the build. Keeping
+  # them as pinned sources makes every input hash-verified by rattler-build and
+  # allows the actual compilation to run without network access.
+  - url: https://gcc.gnu.org/pub/gcc/infrastructure/gettext-0.22.tar.gz
+    sha256: 49f089be11b490170bbf09ed2f51e5f5177f55be4cc66504a5861820e0fb06ab
+    target_directory: gettext
+  - url: https://gcc.gnu.org/pub/gcc/infrastructure/gmp-6.3.0.tar.bz2
+    sha256: ac28211a7cfb609bae2e2c8d6058d66c8fe96434f740cf6fe2e47b000d1c20cb
+    target_directory: gmp
+  - url: https://gcc.gnu.org/pub/gcc/infrastructure/isl-0.24.tar.bz2
+    sha256: fcf78dd9656c10eb8cf9fbd5f59a0b6b01386205fe1934b3b287a0a1898145c0
+    target_directory: isl
+  - url: https://gcc.gnu.org/pub/gcc/infrastructure/mpc-1.3.1.tar.gz
+    sha256: ab642492f5cf882b74aa0cb730cd410a81edcdbec895183ce930e706c1c759b8
+    target_directory: mpc
+  - url: https://gcc.gnu.org/pub/gcc/infrastructure/mpfr-4.2.2.tar.bz2
+    sha256: 9ad62c7dc910303cd384ff8f1f4767a655124980bb6d8650fe62c815a231bb7b
+    target_directory: mpfr
+
+build:
+  number: 0
+  string: h${{ hash }}_${{ build_number }}
+  script:
+    file: build.sh
+    env:
+      SYSROOT_TRIPLET: "${{ sysroot_triplet }}"
+
+requirements:
+  build:
+    # Stable bootstrap interface. These are seed metapackages for the dirty
+    # build and stage aliases for every later self-hosted build.
+    - gcc
+    - gxx
+    - binutils ==2.46.1
+    - gnuconfig
+    - make
+    - sysroot_linux-64
+  host:
+    - sysroot_linux-64
+  run:
+    # Use the local native binutils carrier. Like GCC, it has no embedded
+    # conda sysroot; hermetic recipes select a sysroot explicitly.
+    - binutils ==2.46.1
+
+tests:
+  - package_contents:
+      bin:
+        - cpp
+        - gcc
+        - g++
+        - gcc-ar
+        - gcc-nm
+        - gcc-ranlib
+        - gcov
+        - gcov-dump
+        - gcov-tool
+        - x86_64-pc-linux-gnu-gcc
+        - x86_64-pc-linux-gnu-g++
+        - x86_64-pc-linux-gnu-c++
+        - x86_64-pc-linux-gnu-gcc-ar
+        - x86_64-pc-linux-gnu-gcc-nm
+        - x86_64-pc-linux-gnu-gcc-ranlib
+      files:
+        - lib/libgcc_s.so
+        - lib/libgomp.so
+        - lib/libstdc++.so
+      include:
+        - c++/16.2.0/iostream
+
+  - script:
+      # The installed compiler must not embed a conda sysroot. Hermetic builds
+      # select one explicitly with --sysroot in their own recipes.
+      - test -z "$(gcc -print-sysroot)"
+      - test -z "$(g++ -print-sysroot)"
+      - cpp --version
+      - gcc --version
+      - g++ --version
+      - x86_64-pc-linux-gnu-gcc --version
+      - x86_64-pc-linux-gnu-g++ --version
+      - gcc -O2 -Wall -Werror tests/hello.c -o hello-c
+      - ./hello-c
+      - g++ -O2 -std=c++20 -Wall -Werror tests/hello.cpp -o hello-cxx
+      - ./hello-cxx
+    files:
+      recipe:
+        - tests/
+
+about:
+  homepage: https://gcc.gnu.org/
+  license: GPL-3.0-or-later WITH GCC-exception-3.1 AND LGPL-2.0-or-later AND LGPL-3.0-or-later AND MIT
+  license_file:
+    - COPYING
+    - COPYING.LIB
+    - COPYING.RUNTIME
+    - COPYING3
+    - COPYING3.LIB
+  summary: Coarse GCC/G++ toolchain used by the devkit bootstrap
+  description: A single-package GCC/G++ installation compiled once by the previous bootstrap stage.
+  repository: https://gcc.gnu.org/git/gcc.git
+  documentation: https://gcc.gnu.org/onlinedocs/
+
+extra:
+  bootstrap-role: compiler-carrier
