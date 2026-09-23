@@ -98,6 +98,19 @@ pixi run bootstrap
 `pixi.toml` and `pixi.lock` pin the build tools independently from the target
 packages produced by this workspace.
 
+## GitHub Actions
+
+The complete bootstrap runs in GitHub Actions on pushes to `main`, pull
+requests, and manual workflow dispatches. The workflow uses the locked Pixi
+environment and executes the same canonical command as a local run:
+
+```text
+pixi run bootstrap
+```
+
+You can start a run from the repository's **Actions → GCC bootstrap → Run
+workflow** menu.
+
 Fetching the seed requires Bash, curl, coreutils, and `rattler-index`
 command:
 
